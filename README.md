@@ -1,6 +1,8 @@
 # QCyberCafe
 QT 5.12 based CyberCafe Kiosk Software
 
+mainly targeted at macos for now
+
 WIP test at own risk
 
 ✅ NEW FEATURES:
