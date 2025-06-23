@@ -1,0 +1,75 @@
+To programmatically lock a macOS screen from a C++ application, you can utilize the login framework and its SACLockScreenImmediate() function. This function, while not officially documented by Apple, provides a reliable way to trigger the screen lock mechanism. You'll need to link against the login.framework and use ctypes to call the function from your C++ code. 
+Here's how you can achieve this:
+Include necessary headers:
+C++
+
+   #include <iostream>
+   #include <Python.h>
+Load the login.framework and get the function pointer:
+C++
+
+   PyObject* pModule = PyImport_ImportModule("ctypes");
+   if (!pModule) {
+       std::cerr << "Failed to import ctypes" << std::endl;
+       return 1;
+   }
+
+   PyObject* pFunc = PyObject_GetAttrString(pModule, "CDLL");
+   if (!pFunc || !PyCallable_Check(pFunc)) {
+       std::cerr << "Could not find CDLL" << std::endl;
+       Py_DECREF(pModule);
+       return 1;
+   }
+
+   PyObject* pLoginFrameworkPath = PyUnicode_FromString("/System/Library/PrivateFrameworks/login.framework/login");
+   PyObject* pLogin = PyObject_CallFunctionObjArgs(pFunc, pLoginFrameworkPath, NULL);
+   Py_DECREF(pLoginFrameworkPath);
+   if (!pLogin) {
+       std::cerr << "Failed to load login.framework" << std::endl;
+       Py_DECREF(pModule);
+       Py_XDECREF(pFunc);
+       return 1;
+   }
+
+   PyObject* pSACLockScreenImmediate = PyObject_GetAttrString(pLogin, "SACLockScreenImmediate");
+   if (!pSACLockScreenImmediate || !PyCallable_Check(pSACLockScreenImmediate)) {
+       std::cerr << "Could not find SACLockScreenImmediate" << std::endl;
+       Py_DECREF(pLogin);
+       Py_DECREF(pModule);
+       Py_XDECREF(pFunc);
+       return 1;
+   }
+Call the SACLockScreenImmediate() function:
+C++
+
+   PyObject* result = PyObject_CallObject(pSACLockScreenImmediate, NULL);
+   if (!result) {
+       std::cerr << "Failed to call SACLockScreenImmediate" << std::endl;
+       Py_DECREF(pSACLockScreenImmediate);
+       Py_DECREF(pLogin);
+       Py_DECREF(pModule);
+       Py_XDECREF(pFunc);
+       return 1;
+   }
+
+   Py_DECREF(result);
+   Py_DECREF(pSACLockScreenImmediate);
+   Py_DECREF(pLogin);
+   Py_DECREF(pModule);
+   Py_XDECREF(pFunc);
+
+   return 0;
+Initialize and finalize the Python interpreter:
+C++
+
+   int main() {
+       Py_Initialize();
+       int result = lockScreen();
+       Py_Finalize();
+       return result;
+   }
+Important notes:
+This code uses the ctypes library, which is part of Python. Therefore, you need to have Python installed and linked to your C++ project.
+The SACLockScreenImmediate() function is part of a private framework, and Apple might change its behavior or deprecate it in future macOS versions. Use with caution and consider alternative approaches if available.
+You might need to adjust the paths to the Python interpreter and the login.framework depending on your specific setup.
+Consider adding error handling and resource cleanup to make the code more robust. 
